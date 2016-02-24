@@ -91,6 +91,8 @@ class JSMap:
         # TODO following values should not be manually set
         f.write('\t\ttravelMode: google.maps.TravelMode.TRANSIT,\n')
         f.write('\t\tunitSystem: google.maps.UnitSystem.METRIC};\n')
+        # TODO use the request time (by default it recomputes the route at call time)
+        # specify transitOption.departureTime (or arrival) in the request
         f.write('\tdirectionsService.route(request, function(response, status) {\n')
         f.write('\tif (status != google.maps.DirectionsStatus.OK) {\n')
         f.write('\t\talert("Request status is: "+status);\n')
@@ -168,6 +170,7 @@ class JSMap:
         strokeColor = "FFFFFF"
         strokeOpacity = 0.0
         strokeWeight = 1
+        zIndex = 1
 
         coordsName = "coords%d" % index
         f.write('var %s = [\n' % coordsName)
@@ -185,7 +188,8 @@ class JSMap:
         f.write('\tpaths: %s,\n' % coordsName)
         f.write('\tstrokeColor: "#%s",\n' % (strokeColor))
         f.write('\tstrokeOpacity: %f,\n' % (strokeOpacity))
-        f.write('\tstrokeWeight: %d\n' % (strokeWeight))
+        f.write('\tstrokeWeight: %d,\n' % (strokeWeight))
+        f.write('\tzIndex: %d\n' % (zIndex))
         f.write('});\n')
         f.write('new google.maps.event.addListener(%s, "click", function() {\n' % polygonName)
         # f.write('\ttoggleIW(infowindow, \'%s\', map, %s);\n' % (res.text, centerName))  # be careful with " in text
