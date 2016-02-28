@@ -1,21 +1,22 @@
-__author__ = 'adrien'
+__author__ = 'ielemin'
+
 
 class RequestBaseParams:
-    def __init__(self, fixedPoint, isDestinationFixed, fixedTime, mode, units):
-        self.isDestinationFixed = isDestinationFixed
-        self.fixedPoint = fixedPoint
-        self.fixedTime = fixedTime
+    def __init__(self, fixed_point, is_destination_fixed, fixed_time, mode, units):
+        self.is_destination_fixed = is_destination_fixed
+        self.fixed_point = fixed_point
+        self.fixed_time = fixed_time
         self.mode = mode
         self.units = units
 
-    def IsMatch(self, other):
-        if self.isDestinationFixed != other.isDestinationFixed:
+    def is_match(self, other):
+        if self.is_destination_fixed != other.is_destination_fixed:
             return False
-        if self.fixedPoint[0] != other.fixedPoint[0]:
+        if self.fixed_point[0] != other.fixed_point[0]:
             return False
-        if self.fixedPoint[1] != other.fixedPoint[1]:
+        if self.fixed_point[1] != other.fixed_point[1]:
             return False
-        if self.fixedTime != other.fixedTime:
+        if self.fixed_time != other.fixed_time:
             return False
         if self.mode != other.mode:
             return False
@@ -25,29 +26,29 @@ class RequestBaseParams:
 
 
 class RequestItemParams:
-    def __init__(self, varPoint, baseParams):
-        self.varPoint = varPoint
-        self.baseParams = baseParams
+    def __init__(self, var_point, base_params):
+        self.var_point = var_point
+        self.base_params = base_params
 
     @property
     def origin(self):
-        if self.baseParams.isDestinationFixed:
-            return self.varPoint  # not an array of LatLng
+        if self.base_params.is_destination_fixed:
+            return self.var_point  # not an array of LatLng
         else:
-            return self.baseParams.fixedPoint  # not an array of LafLng
+            return self.base_params.fixed_point  # not an array of LafLng
 
     @property
     def destination(self):
-        if self.baseParams.isDestinationFixed:
-            return self.baseParams.fixedPoint  # not an array of LatLng
+        if self.base_params.is_destination_fixed:
+            return self.base_params.fixed_point  # not an array of LatLng
         else:
-            return self.varPoint  # not an array of LafLng
+            return self.var_point  # not an array of LafLng
 
-    def IsMatch(self, other):
-        if not self.baseParams.IsMatch(other.baseParams):
+    def is_match(self, other):
+        if not self.base_params.is_match(other.base_params):
             return False
-        if self.varPoint[0] != other.varPoint[0]:
+        if self.var_point[0] != other.var_point[0]:
             return False
-        if self.varPoint[1] != other.varPoint[1]:
+        if self.var_point[1] != other.var_point[1]:
             return False
         return True

@@ -1,80 +1,81 @@
-__author__ = 'adrien'
-
 import datetime
 
 from my_request import my_parameters
 
 from util.my_color import MyColor
 
+__author__ = 'adrien'
+
+
 class ResultItem:
-    def __init__(self, reqTimestamp, originLatLng, destinationLatLen, isDestinationFixed, fixedTime, mode,
-                 originGeocode,
-                 destinationGeocode, distanceText, distanceValue, durationText, durationValue,
+    def __init__(self, req_timestamp, origin_latlng, destination_latlng, is_destination_fixed, fixed_time, mode,
+                 origin_geocode, destination_geocode, distance_text, distance_value, duration_text, duration_value,
                  color=MyColor.farColorRGB):
-        self.reqTimestamp = reqTimestamp
-        self.originLatLng = originLatLng
-        self.destinationLatLng = destinationLatLen
-        self.isDestinationFixed = isDestinationFixed
-        self.fixedTime = fixedTime
+        self.req_timestamp = req_timestamp
+        self.origin_latlng = origin_latlng
+        self.destination_latlng = destination_latlng
+        self.is_destination_fixed = is_destination_fixed
+        self.fixed_time = fixed_time
         self.mode = mode
-        self.originGeocode = originGeocode
-        self.destinationGeocode = destinationGeocode
-        self.distanceText = distanceText
-        self.distanceValue = distanceValue
-        self.durationText = durationText
-        self.durationValue = durationValue
+        self.origin_geocode = origin_geocode
+        self.destination_geocode = destination_geocode
+        self.distance_text = distance_text
+        self.distance_value = distance_value
+        self.duration_text = duration_text
+        self.duration_value = duration_value
         self.color = color
 
     @property
-    def colorAsHexString(self):
-        return MyColor.colorAsHexString(self.color)
+    def color_as_hex_string(self):
+        return MyColor.color_as_hex_string(self.color)
 
     @property
     def title(self):
-        return str(self.durationValue)
+        return str(self.duration_value)
 
     @property
     def text(self):
         output = ''
-        if self.isDestinationFixed:
-            markerLatLng = self.originLatLng
-            markerGeocode = self.originGeocode
-            refGeocode = self.destinationGeocode
-            pathOrientation = 'to'
-            timeDescription = 'arrival'
+        if self.is_destination_fixed:
+            marker_latlng = self.origin_latlng
+            # marker_geocode = self.origin_geocode
+            # ref_geocode = self.destination_geocode
+            path_orientation = 'to'
+            time_description = 'arrival'
         else:
-            markerLatLng = self.destinationLatLng
-            markerGeocode = self.destinationGeocode
-            refGeocode = self.originGeocode
-            pathOrientation = 'from'
-            timeDescription = 'departure'
-        output += 'Marker at (%f deg, %f deg).' % (markerLatLng[0], markerLatLng[1])
+            marker_latlng = self.destination_latlng
+            # marker_geocode = self.destination_geocode
+            # ref_geocode = self.origin_geocode
+            path_orientation = 'from'
+            time_description = 'departure'
+        output += 'Marker at (%f deg, %f deg).' % (marker_latlng[0], marker_latlng[1])
         # TODO solve this unicode encoding problem
-        # output += ' Actual address: "%s".' % (markerGeocode)
-        # output += ' Reference address: "%s".' % (refGeocode)
-        output += ' Distance %s reference: %d m (%s). ' % (pathOrientation, self.distanceValue, self.distanceText)
-        output += ' Travel time %s reference: %d s (%s)' % (pathOrientation, self.durationValue, self.durationText)
+        # output += ' Actual address: "%s".' % (marker_geocode)
+        # output += ' Reference address: "%s".' % (ref_geocode)
+        output += ' Distance %s reference: %d m (%s). ' % (path_orientation, self.distance_value, self.distance_text)
+        output += ' Travel time %s reference: %d s (%s)' % (path_orientation, self.duration_value, self.duration_text)
         output += ' [Request computed on %s UTC in "%s" mode for %s at %s UTC].' % (
-            datetime.datetime.utcfromtimestamp(self.reqTimestamp),
-            self.mode, timeDescription, datetime.datetime.utcfromtimestamp(self.fixedTime))
+            datetime.datetime.utcfromtimestamp(self.req_timestamp),
+            self.mode, time_description, datetime.datetime.utcfromtimestamp(self.fixed_time))
         return output
 
     @property
-    def varPoint(self):
-        if self.isDestinationFixed:
-            return self.originLatLng  # not an array of LatLng
+    def var_point(self):
+        if self.is_destination_fixed:
+            return self.origin_latlng  # not an array of LatLng
         else:
-            return self.destinationLatLng  # not an array of LatLng
+            return self.destination_latlng  # not an array of LatLng
 
     @property
-    def fixedPoint(self):
-        if self.isDestinationFixed:
-            return self.destinationLatLng  # not an array of LatLng
+    def fixed_point(self):
+        if self.is_destination_fixed:
+            return self.destination_latlng  # not an array of LatLng
         else:
-            return self.originLatLng  # not an array of LatLng
+            return self.origin_latlng  # not an array of LatLng
 
     # TODO request 'units' is not serialized ?
     @property
-    def RequestItemParams(self):
-        bp = my_parameters.RequestBaseParams(self.fixedPoint, self.isDestinationFixed, self.fixedTime, self.mode, 'metric')
-        return my_parameters.RequestItemParams(self.varPoint, bp)
+    def request_item_params(self):
+        bp = my_parameters.RequestBaseParams(self.fixed_point, self.is_destination_fixed, self.fixed_time, self.mode,
+                                             'metric')
+        return my_parameters.RequestItemParams(self.var_point, bp)

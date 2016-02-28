@@ -1,129 +1,135 @@
-__author__ = 'adrien'
-
 import math
 
 from my_request import google_parameters
 
+__author__ = 'ielemin'
+
+
 # Generic class ; there should be different implementations (zone shape, grid shape, etc.)
 class MapGridParams:
-    def __init__(self, latLng, resolutionKm, sizeKm):
-        if not (latLng): return
-        if len(latLng) != 2: return
-        self.zoneCenterLat = latLng[0]
-        self.zoneCenterLng = latLng[1]
-        self.resolutionKm = resolutionKm
-        self.zoneSizeKm = sizeKm
+    def __init__(self, latlng, resolution_km, size_km):
+        if not latlng:
+            return
+        if len(latlng) != 2:
+            return
+        self.zone_center_lat = latlng[0]
+        self.zone_center_lng = latlng[1]
+        self.resolution_km = resolution_km
+        self.zone_size_km = size_km
         # TODO implement zone/grid shape
-        # self.zoneShape = 'circle'  # could be square
-        # self.gridShape = 'square'  # could be triangular
+        # self.zone_shape = 'circle'  # could be square
+        # self.grid_shape = 'square'  # could be triangular
 
-    def GetOrigin(self):
-        return [[self.zoneCenterLat, self.zoneCenterLng]]
-
-    @property
-    def radiusNodes(self):
-        return math.trunc(self.zoneSizeKm / self.resolutionKm)
+    def get_origin(self):
+        return [[self.zone_center_lat, self.zone_center_lng]]
 
     @property
-    def resolutionLatDeg(self):
-        return self.resolutionKm / MapGridUtils.GetAngularFactorLatitudeKm()
+    def radius_nodes(self):
+        return math.trunc(self.zone_size_km / self.resolution_km)
 
     @property
-    def resolutionLngDeg(self):
-        return self.resolutionKm / MapGridUtils.GetAngularFactorLongitudeKm(self.zoneCenterLat)
+    def resolution_lat_deg(self):
+        return self.resolution_km / MapGridUtils.get_angular_factor_latitude_km()
 
-    def ToString(self):
-        print("Zone center: (%f deg,%f deg)" % (self.zoneCenterLat, self.zoneCenterLng))
+    @property
+    def resolution_lng_deg(self):
+        return self.resolution_km / MapGridUtils.get_angular_factor_longitude_km(self.zone_center_lat)
+
+    def to_string(self):
+        print("Zone center: (%f deg,%f deg)" % (self.zone_center_lat, self.zone_center_lng))
         print("Local resolution: %f km/node <-> (%f deg/node,%f deg/node)" % (
-            self.resolutionKm, self.resolutionLatDeg, self.resolutionLngDeg))
+            self.resolution_km, self.resolution_lat_deg, self.resolution_lng_deg))
         # print("Zone shape: %s" % self.zoneShape)
         # print("Grid shape in zone: %s" % self.gridShape)
-        print("Maximum number of grid nodes in zone: %d" % (4 * self.radiusNodes * self.radiusNodes))
-        print("Estimated number of grid nodes in zone: %d" % math.trunc(math.pi * self.radiusNodes * self.radiusNodes))
+        print("Maximum number of grid nodes in zone: %d" % (4 * self.radius_nodes * self.radius_nodes))
+        print(
+            "Estimated number of grid nodes in zone: %d" % math.trunc(math.pi * self.radius_nodes * self.radius_nodes))
 
-    def IsInZone(self, pointLat, pointLng):
-        distanceToOriginKm = MapGridUtils.GetDistance(self.zoneCenterLat, self.zoneCenterLng, pointLat, pointLng, False)
+    def is_in_zone(self, point_lat, point_lng):
+        distance_to_origin_km = MapGridUtils.get_distance(self.zone_center_lat, self.zone_center_lng, point_lat,
+                                                          point_lng, False)
         # TODO implement other zone shapes (circle vs square)
-        if distanceToOriginKm > self.zoneSizeKm:
+        if distance_to_origin_km > self.zone_size_km:
             return False
         return True
 
-    def GenerateGrid(self):
+    def generate_grid(self):
         grid = []
         # TODO implement other grid shapes (square vs triangular)
-        for latIdx in range(-self.radiusNodes, self.radiusNodes + 1):
-            for lngIdx in range(-self.radiusNodes, self.radiusNodes + 1):
-                pointLat = self.zoneCenterLat + latIdx * self.resolutionLatDeg
-                pointLng = self.zoneCenterLng + lngIdx * self.resolutionLngDeg
-                grid.append([pointLat, pointLng])
+        for latIdx in range(-self.radius_nodes, self.radius_nodes + 1):
+            for lngIdx in range(-self.radius_nodes, self.radius_nodes + 1):
+                point_lat = self.zone_center_lat + latIdx * self.resolution_lat_deg
+                point_lng = self.zone_center_lng + lngIdx * self.resolution_lng_deg
+                grid.append([point_lat, point_lng])
         return grid  # [[Lat,Lng]]
 
 
 class MapGrid:
-    def __init__(self, gridParams, baseParams):  # (MapGridParams,RequestBaseParams)
-        self.gridParams = gridParams
-        self.requestBaseParams = baseParams
+    def __init__(self, grid_params, base_params):  # (MapGridParams,RequestBaseParams)
+        self.grid_params = grid_params
+        self.request_base_params = base_params
         return
 
-    def GenerateRequests(self):
-        allDestinations = []
+    def generate_requests(self):
+        all_destinations = []
         print("----- Request Params start -----")
-        self.gridParams.ToString()
-        grid = self.gridParams.GenerateGrid()
+        self.grid_params.to_string()
+        grid = self.grid_params.generate_grid()
         for point in grid:
-            if self.gridParams.IsInZone(point[0], point[1]):
-                allDestinations.append(point)
-        print("Actual number of nodes: %d" % len(allDestinations))
+            if self.grid_params.is_in_zone(point[0], point[1]):
+                all_destinations.append(point)
+        print("Actual number of nodes: %d" % len(all_destinations))
         print("------ Request Params end ------")
 
-        output = google_parameters.RequestGroupContainer(self.requestBaseParams)
-        output.Append(allDestinations)
+        output = google_parameters.RequestGroupContainer(self.request_base_params)
+        output.append(all_destinations)
         return output  # google_parameters.RequestGroupContainer
 
-    def IsMatch(self, requestItemParams, strictMatch):  # RequestItemParams
-        if strictMatch:
-            if not self.gridParams.IsOnGrid(requestItemParams.varPoint[0], requestItemParams.varPoint[1]):
+    def is_match(self, requestitem_params, strict_match):  # request_item_params
+        if strict_match:
+            if not self.grid_params.IsOnGrid(requestitem_params.var_point[0], requestitem_params.var_point[1]):
                 return False
         else:
-            if not self.gridParams.IsInZone(requestItemParams.varPoint[0], requestItemParams.varPoint[1]):
+            if not self.grid_params.is_in_zone(requestitem_params.var_point[0], requestitem_params.var_point[1]):
                 return False
-        if not self.requestBaseParams.IsMatch(requestItemParams.baseParams):
+        if not self.request_base_params.is_match(requestitem_params.baseParams):
             return False
         return True
 
 
 class MapGridUtils:
     @staticmethod
-    def GetEarthRadiusKm():
+    def get_earth_radius_km():
         return 6371  # http://en.wikipedia.org/wiki/Great-circle_distance#Radius_for_spherical_Earth
 
     # In km/degree
     @staticmethod
-    def GetAngularFactorLatitudeKm():
-        return math.pi * MapGridUtils.GetEarthRadiusKm() / 180.0
+    def get_angular_factor_latitude_km():
+        return math.pi * MapGridUtils.get_earth_radius_km() / 180.0
 
     # In km/degree
     @staticmethod
-    def GetAngularFactorLongitudeKm(latitudeDeg):
-        return MapGridUtils.GetAngularFactorLatitudeKm() * math.cos(math.pi / 180 * latitudeDeg)
+    def get_angular_factor_longitude_km(lat_deg):
+        return MapGridUtils.get_angular_factor_latitude_km() * math.cos(math.pi / 180 * lat_deg)
 
     @staticmethod
-    def GetDistance(lat1Deg, lng1Deg, lat2Deg, lng2Deg, isSimple):  # in degrees
-        if isSimple:
-            return math.sqrt(math.pow((lat2Deg - lat1Deg) * MapGridUtils.GetAngularFactorLatitudeKm(), 2) + math.pow(
-                (lng2Deg - lng1Deg) * MapGridUtils.GetAngularFactorLongitudeKm((lat1Deg + lat2Deg) / 2), 2))
+    def get_distance(lat1_deg, lng1_deg, lat2_deg, lng2_deg, is_simple):  # in degrees
+        if is_simple:
+            return math.sqrt(
+                math.pow((lat2_deg - lat1_deg) * MapGridUtils.get_angular_factor_latitude_km(), 2) + math.pow(
+                    (lng2_deg - lng1_deg) * MapGridUtils.get_angular_factor_longitude_km((lat1_deg + lat2_deg) / 2), 2))
         else:
-            return MapGridUtils.HaversineDistance(lat1Deg, lng1Deg, lat2Deg, lng2Deg)
+            return MapGridUtils.haversine_distance(lat1_deg, lng1_deg, lat2_deg, lng2_deg)
 
     # http://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
     @staticmethod
-    def HaversineDistance(lat1Deg, lng1Deg, lat2Deg, lng2Deg):
+    def haversine_distance(lat1_deg, lng1_deg, lat2_deg, lng2_deg):
         # convert decimal degrees to radians
-        lng1Rad, lat1Rad, lng2Rad, lat2Rad = map(math.radians, [lng1Deg, lat1Deg, lng2Deg, lat2Deg])
+        lng1_rad, lat1_rad, lng2_rad, lat2_rad = map(math.radians, [lng1_deg, lat1_deg, lng2_deg, lat2_deg])
 
         # haversine formula
-        dLngRad = lng2Rad - lng1Rad
-        dLatRad = lat2Rad - lat1Rad
-        a = math.sin(dLatRad / 2) ** 2 + math.cos(lat1Rad) * math.cos(lat2Rad) * math.sin(dLngRad / 2) ** 2
+        d_lng_rad = lng2_rad - lng1_rad
+        d_lat_rad = lat2_rad - lat1_rad
+        a = math.sin(d_lat_rad / 2) ** 2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(d_lng_rad / 2) ** 2
         c = 2 * math.asin(math.sqrt(a))
-        return c * MapGridUtils.GetEarthRadiusKm()
+        return c * MapGridUtils.get_earth_radius_km()
