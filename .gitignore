@@ -64,3 +64,5 @@ geocode/*
 out/*
 results/*
 .idea
+.DS_Store
+API_key*
